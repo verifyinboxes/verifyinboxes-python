@@ -1,0 +1,3338 @@
+{
+  "format": 1,
+  "api_key": "bv_testtesttesttesttesttesttesttest",
+  "scenarios": [
+    {
+      "name": "account_get",
+      "about": "The account, decoded leniently: a field the API adds later (here `plan`) is ignored, never an error.",
+      "call": { "op": "account.get" },
+      "exchanges": [
+        {
+          "request": { "method": "GET", "path": "/v1/account" },
+          "response": {
+            "operation": "getAccount",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000001" },
+            "compat": ["plan"],
+            "json": {
+              "name": "acme",
+              "balance": 9940,
+              "reviewed": true,
+              "test_emails": false,
+              "safe_to_send_threshold": 0.8,
+              "plan": "growth"
+            }
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": {
+        "returns": {
+          "name": "acme",
+          "balance": 9940,
+          "reviewed": true,
+          "test_emails": false,
+          "safe_to_send_threshold": 0.8
+        }
+      }
+    },
+    {
+      "name": "unknown_verdict_kept",
+      "about": "A verdict the client does not know (one the API may add later) is kept as it is, never an error.",
+      "call": { "op": "verify", "args": { "email": "ann@example.com" } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "ann@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": null,
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000002" },
+            "json": {
+              "email": "ann@example.com",
+              "verdict": "spam_trap",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_exists",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77"
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "returns": {
+          "email": "ann@example.com",
+          "verdict": "spam_trap",
+          "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77"
+        }
+      }
+    },
+    {
+      "name": "access_token_as_bearer",
+      "about": "A personal access token is sent as a bearer credential, exactly as an API key is, with no check of its prefix.",
+      "client": { "api_key": "vi_at_testtesttesttesttesttesttesttesttesttest" },
+      "call": { "op": "account.get" },
+      "exchanges": [
+        {
+          "request": { "method": "GET", "path": "/v1/account" },
+          "response": {
+            "operation": "getAccount",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000003" },
+            "json": {
+              "name": "acme",
+              "balance": 9940,
+              "reviewed": true,
+              "test_emails": false,
+              "safe_to_send_threshold": 0.8
+            }
+          }
+        }
+      ],
+      "outcome": { "returns": { "name": "acme", "balance": 9940 } }
+    },
+    {
+      "name": "verify_answered",
+      "about": "A check answered within the API's 5-second hold: one POST with a new Idempotency-Key, the result and its job id.",
+      "call": { "op": "verify", "args": { "email": "ann@example.com" } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "ann@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000004" },
+            "json": {
+              "email": "ann@example.com",
+              "verdict": "valid",
+              "score": null,
+              "safe_to_send": true,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_exists",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77"
+            }
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": {
+        "returns": {
+          "email": "ann@example.com",
+          "verdict": "valid",
+          "safe_to_send": true,
+          "reason": "mailbox_exists",
+          "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77"
+        }
+      }
+    },
+    {
+      "name": "verify_force_recheck",
+      "about": "force_recheck is sent as `\"force_recheck\": true` beside the address.",
+      "call": { "op": "verify", "args": { "email": "ann@example.com", "force_recheck": true } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "ann@example.com", "force_recheck": true },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000005" },
+            "json": {
+              "email": "ann@example.com",
+              "verdict": "valid",
+              "score": null,
+              "safe_to_send": true,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_exists",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77"
+            }
+          }
+        }
+      ],
+      "outcome": { "returns": { "verdict": "valid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" } }
+    },
+    {
+      "name": "verify_polls_after_202",
+      "about": "A check not answered within 5 seconds is polled every 2 seconds until it is done.",
+      "call": { "op": "verify", "args": { "email": "ann@example.com" } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "ann@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 202,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000006" },
+            "json": { "status": "pending", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" }
+          }
+        },
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" },
+          "response": {
+            "operation": "getJob",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000007" },
+            "json": {
+              "id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77",
+              "kind": "single",
+              "status": "running",
+              "total": 1,
+              "done": 0,
+              "created_at": "2026-11-18T09:29:58.402Z",
+              "finished_at": null,
+              "counts": null,
+              "purged": false,
+              "resolve_job_ids": []
+            }
+          }
+        },
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" },
+          "response": {
+            "operation": "getJob",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000008" },
+            "json": {
+              "id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77",
+              "kind": "single",
+              "status": "done",
+              "total": 1,
+              "done": 1,
+              "created_at": "2026-11-18T09:29:58.402Z",
+              "finished_at": "2026-11-18T09:30:00.130Z",
+              "counts": { "invalid": 1 },
+              "purged": false,
+              "result": {
+                "email": "ann@example.com",
+                "verdict": "invalid",
+                "score": null,
+                "safe_to_send": false,
+                "flags": [],
+                "provider": "google",
+                "catch_all_domain": false,
+                "verified_at": "2026-11-18T09:30:00.123Z",
+                "source": "smtp",
+                "reason": "mailbox_not_found"
+              },
+              "resolve_job_ids": []
+            }
+          }
+        }
+      ],
+      "sleeps": [2, 2],
+      "outcome": {
+        "returns": {
+          "email": "ann@example.com",
+          "verdict": "invalid",
+          "reason": "mailbox_not_found",
+          "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77"
+        }
+      }
+    },
+    {
+      "name": "verify_no_wait_returns_pending",
+      "about": "With wait off, a 202 is returned as the pending check (its job id), and nothing is polled.",
+      "call": { "op": "verify", "args": { "email": "ann@example.com", "wait": false } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "ann@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 202,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000009" },
+            "json": { "status": "pending", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" }
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": { "returns": { "status": "pending", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" } }
+    },
+    {
+      "name": "verify_timeout_keeps_job_id",
+      "about": "A check that outlives its timeout raises a wait timeout that names the job, so the check can be resumed.",
+      "call": { "op": "verify", "args": { "email": "ann@example.com", "timeout": 5 } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "ann@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 202,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000000a" },
+            "json": { "status": "pending", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" }
+          }
+        },
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" },
+          "response": {
+            "operation": "getJob",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000000b" },
+            "json": {
+              "id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77",
+              "kind": "single",
+              "status": "running",
+              "total": 1,
+              "done": 0,
+              "created_at": "2026-11-18T09:29:58.402Z",
+              "finished_at": null,
+              "counts": null,
+              "purged": false,
+              "resolve_job_ids": []
+            }
+          }
+        },
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" },
+          "response": {
+            "operation": "getJob",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000000c" },
+            "json": {
+              "id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77",
+              "kind": "single",
+              "status": "running",
+              "total": 1,
+              "done": 0,
+              "created_at": "2026-11-18T09:29:58.402Z",
+              "finished_at": null,
+              "counts": null,
+              "purged": false,
+              "resolve_job_ids": []
+            }
+          }
+        },
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" },
+          "response": {
+            "operation": "getJob",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000000d" },
+            "json": {
+              "id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77",
+              "kind": "single",
+              "status": "running",
+              "total": 1,
+              "done": 0,
+              "created_at": "2026-11-18T09:29:58.402Z",
+              "finished_at": null,
+              "counts": null,
+              "purged": false,
+              "resolve_job_ids": []
+            }
+          }
+        }
+      ],
+      "sleeps": [2, 2, 1],
+      "outcome": { "raises": { "kind": "wait_timeout", "job_ids": ["019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77"] } }
+    },
+    {
+      "name": "verify_poll_error_keeps_job_id",
+      "about": "A poll that keeps failing raises the server error, which names the job already made.",
+      "call": { "op": "verify", "args": { "email": "ann@example.com" } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "ann@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 202,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000000e" },
+            "json": { "status": "pending", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" }
+          }
+        },
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" },
+          "response": {
+            "operation": "getJob",
+            "status": 500,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000000f" },
+            "json": { "error": { "code": "internal", "message": "internal error" } }
+          }
+        },
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" },
+          "response": {
+            "operation": "getJob",
+            "status": 500,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000010" },
+            "json": { "error": { "code": "internal", "message": "internal error" } }
+          }
+        },
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" },
+          "response": {
+            "operation": "getJob",
+            "status": 500,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000011" },
+            "json": { "error": { "code": "internal", "message": "internal error" } }
+          }
+        }
+      ],
+      "sleeps": [2, { "min": 0.25, "max": 0.5 }, { "min": 0.5, "max": 1 }],
+      "outcome": {
+        "raises": {
+          "kind": "server",
+          "status": 500,
+          "code": "internal",
+          "request_id": "019a7e00-0000-7000-8000-000000000011",
+          "job_ids": ["019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77"],
+          "message_has_request_id": true
+        }
+      }
+    },
+    {
+      "name": "checks_wait_resumes",
+      "about": "A check is resumed by its job id, asking at once (it may be done already): its result, with that job id.",
+      "call": { "op": "checks.wait", "args": { "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" } },
+      "exchanges": [
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" },
+          "response": {
+            "operation": "getJob",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000012" },
+            "json": {
+              "id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77",
+              "kind": "single",
+              "status": "done",
+              "total": 1,
+              "done": 1,
+              "created_at": "2026-11-18T09:29:58.402Z",
+              "finished_at": "2026-11-18T09:30:00.130Z",
+              "counts": { "valid": 1 },
+              "purged": false,
+              "result": {
+                "email": "ann@example.com",
+                "verdict": "valid",
+                "score": null,
+                "safe_to_send": true,
+                "flags": [],
+                "provider": "google",
+                "catch_all_domain": false,
+                "verified_at": "2026-11-18T09:30:00.123Z",
+                "source": "smtp",
+                "reason": "mailbox_exists"
+              },
+              "resolve_job_ids": []
+            }
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": {
+        "returns": { "email": "ann@example.com", "verdict": "valid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" }
+      }
+    },
+    {
+      "name": "verify_many_ten_singles",
+      "about": "Up to 10 addresses are checked one by one, in flight together, each with its own new key; results in input order.",
+      "call": {
+        "op": "verify_many",
+        "args": {
+          "emails": [
+            "p1@example.com",
+            "p2@example.com",
+            "p3@example.com",
+            "p4@example.com",
+            "p5@example.com",
+            "p6@example.com",
+            "p7@example.com",
+            "p8@example.com",
+            "p9@example.com",
+            "p10@example.com"
+          ]
+        }
+      },
+      "unordered": true,
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p1@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000013" },
+            "json": {
+              "email": "p1@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b01"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p2@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000014" },
+            "json": {
+              "email": "p2@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b02"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p3@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000015" },
+            "json": {
+              "email": "p3@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b03"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p4@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000016" },
+            "json": {
+              "email": "p4@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b04"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p5@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000017" },
+            "json": {
+              "email": "p5@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b05"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p6@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000018" },
+            "json": {
+              "email": "p6@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b06"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p7@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000019" },
+            "json": {
+              "email": "p7@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b07"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p8@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000001a" },
+            "json": {
+              "email": "p8@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b08"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p9@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000001b" },
+            "json": {
+              "email": "p9@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b09"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p10@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000001c" },
+            "json": {
+              "email": "p10@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b10"
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "returns": [
+          { "email": "p1@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b01" },
+          { "email": "p2@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b02" },
+          { "email": "p3@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b03" },
+          { "email": "p4@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b04" },
+          { "email": "p5@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b05" },
+          { "email": "p6@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b06" },
+          { "email": "p7@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b07" },
+          { "email": "p8@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b08" },
+          { "email": "p9@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b09" },
+          { "email": "p10@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b10" }
+        ]
+      }
+    },
+    {
+      "name": "verify_many_eleven_is_one_list",
+      "about": "11 addresses or more are one list: created, waited for, and its results mapped back to the input by row.",
+      "call": {
+        "op": "verify_many",
+        "args": {
+          "emails": [
+            "p1@example.com",
+            "p2@example.com",
+            "p3@example.com",
+            "p4@example.com",
+            "p5@example.com",
+            "p6@example.com",
+            "p7@example.com",
+            "p8@example.com",
+            "p9@example.com",
+            "p10@example.com",
+            "p11@example.com"
+          ]
+        }
+      },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/jobs",
+            "json": {
+              "emails": [
+                "p1@example.com",
+                "p2@example.com",
+                "p3@example.com",
+                "p4@example.com",
+                "p5@example.com",
+                "p6@example.com",
+                "p7@example.com",
+                "p8@example.com",
+                "p9@example.com",
+                "p10@example.com",
+                "p11@example.com"
+              ]
+            },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "createJob",
+            "status": 201,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000001d" },
+            "json": { "id": "019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c", "status": "running", "total": 11 }
+          }
+        },
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c" },
+          "response": {
+            "operation": "getJob",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000001e" },
+            "json": {
+              "id": "019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c",
+              "kind": "bulk",
+              "status": "done",
+              "total": 11,
+              "done": 11,
+              "created_at": "2026-11-18T10:00:00.000Z",
+              "finished_at": "2026-11-18T10:41:12.551Z",
+              "counts": { "valid": 6, "invalid": 5 },
+              "purged": false,
+              "resolve_job_ids": [],
+              "download_url": "https://api.verifyinboxes.com/v1/jobs/019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c/download"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/v1/jobs/019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c/results",
+            "query": { "limit": "500" }
+          },
+          "response": {
+            "operation": "listJobResults",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000001f" },
+            "json": {
+              "data": [
+                {
+                  "row": 1,
+                  "email": "p1@example.com",
+                  "verdict": "valid",
+                  "score": null,
+                  "safe_to_send": true,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_exists"
+                },
+                {
+                  "row": 2,
+                  "email": "p2@example.com",
+                  "verdict": "invalid",
+                  "score": null,
+                  "safe_to_send": false,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_not_found"
+                },
+                {
+                  "row": 3,
+                  "email": "p3@example.com",
+                  "verdict": "valid",
+                  "score": null,
+                  "safe_to_send": true,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_exists"
+                },
+                {
+                  "row": 4,
+                  "email": "p4@example.com",
+                  "verdict": "invalid",
+                  "score": null,
+                  "safe_to_send": false,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_not_found"
+                },
+                {
+                  "row": 5,
+                  "email": "p5@example.com",
+                  "verdict": "valid",
+                  "score": null,
+                  "safe_to_send": true,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_exists"
+                },
+                {
+                  "row": 6,
+                  "email": "p6@example.com",
+                  "verdict": "invalid",
+                  "score": null,
+                  "safe_to_send": false,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_not_found"
+                },
+                {
+                  "row": 7,
+                  "email": "p7@example.com",
+                  "verdict": "valid",
+                  "score": null,
+                  "safe_to_send": true,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_exists"
+                },
+                {
+                  "row": 8,
+                  "email": "p8@example.com",
+                  "verdict": "invalid",
+                  "score": null,
+                  "safe_to_send": false,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_not_found"
+                },
+                {
+                  "row": 9,
+                  "email": "p9@example.com",
+                  "verdict": "valid",
+                  "score": null,
+                  "safe_to_send": true,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_exists"
+                },
+                {
+                  "row": 10,
+                  "email": "p10@example.com",
+                  "verdict": "invalid",
+                  "score": null,
+                  "safe_to_send": false,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_not_found"
+                },
+                {
+                  "row": 11,
+                  "email": "p11@example.com",
+                  "verdict": "valid",
+                  "score": null,
+                  "safe_to_send": true,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_exists"
+                }
+              ],
+              "next_cursor": null,
+              "complete": true
+            }
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": {
+        "returns": [
+          { "email": "p1@example.com", "verdict": "valid", "job_id": "019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c" },
+          { "email": "p2@example.com", "verdict": "invalid", "job_id": "019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c" },
+          { "email": "p3@example.com", "verdict": "valid", "job_id": "019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c" },
+          { "email": "p4@example.com", "verdict": "invalid", "job_id": "019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c" },
+          { "email": "p5@example.com", "verdict": "valid", "job_id": "019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c" },
+          { "email": "p6@example.com", "verdict": "invalid", "job_id": "019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c" },
+          { "email": "p7@example.com", "verdict": "valid", "job_id": "019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c" },
+          { "email": "p8@example.com", "verdict": "invalid", "job_id": "019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c" },
+          { "email": "p9@example.com", "verdict": "valid", "job_id": "019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c" },
+          { "email": "p10@example.com", "verdict": "invalid", "job_id": "019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c" },
+          { "email": "p11@example.com", "verdict": "valid", "job_id": "019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c" }
+        ]
+      }
+    },
+    {
+      "name": "verify_many_single_retried_same_key",
+      "about": "One of 10 checks loses its answer: it alone is sent again, with its own key, and gets the replay; one result each.",
+      "call": {
+        "op": "verify_many",
+        "args": {
+          "emails": [
+            "p1@example.com",
+            "p2@example.com",
+            "p3@example.com",
+            "p4@example.com",
+            "p5@example.com",
+            "p6@example.com",
+            "p7@example.com",
+            "p8@example.com",
+            "p9@example.com",
+            "p10@example.com"
+          ]
+        }
+      },
+      "unordered": true,
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p1@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000020" },
+            "json": {
+              "email": "p1@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b01"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p2@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000021" },
+            "json": {
+              "email": "p2@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b02"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p3@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": { "operation": "verifyEmail", "drop": true }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p3@example.com" },
+            "idempotency_key": "same"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": {
+              "x-request-id": "019a7e00-0000-7000-8000-000000000023",
+              "idempotent-replayed": "true",
+              "original-request": "019a7e00-0000-7000-8000-000000000022"
+            },
+            "json": {
+              "email": "p3@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b03"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p4@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000024" },
+            "json": {
+              "email": "p4@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b04"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p5@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000025" },
+            "json": {
+              "email": "p5@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b05"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p6@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000026" },
+            "json": {
+              "email": "p6@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b06"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p7@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000027" },
+            "json": {
+              "email": "p7@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b07"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p8@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000028" },
+            "json": {
+              "email": "p8@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b08"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p9@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000029" },
+            "json": {
+              "email": "p9@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b09"
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "p10@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000002a" },
+            "json": {
+              "email": "p10@example.com",
+              "verdict": "invalid",
+              "score": null,
+              "safe_to_send": false,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_not_found",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b10"
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "returns": [
+          { "email": "p1@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b01" },
+          { "email": "p2@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b02" },
+          { "email": "p3@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b03" },
+          { "email": "p4@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b04" },
+          { "email": "p5@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b05" },
+          { "email": "p6@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b06" },
+          { "email": "p7@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b07" },
+          { "email": "p8@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b08" },
+          { "email": "p9@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b09" },
+          { "email": "p10@example.com", "verdict": "invalid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0b10" }
+        ]
+      }
+    },
+    {
+      "name": "verify_many_timeout_keeps_list_id",
+      "about": "A list that outlives the timeout of verify_many raises a wait timeout naming the list, so it can be resumed.",
+      "call": {
+        "op": "verify_many",
+        "args": {
+          "emails": [
+            "p1@example.com",
+            "p2@example.com",
+            "p3@example.com",
+            "p4@example.com",
+            "p5@example.com",
+            "p6@example.com",
+            "p7@example.com",
+            "p8@example.com",
+            "p9@example.com",
+            "p10@example.com",
+            "p11@example.com"
+          ],
+          "timeout": 3
+        }
+      },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/jobs",
+            "json": {
+              "emails": [
+                "p1@example.com",
+                "p2@example.com",
+                "p3@example.com",
+                "p4@example.com",
+                "p5@example.com",
+                "p6@example.com",
+                "p7@example.com",
+                "p8@example.com",
+                "p9@example.com",
+                "p10@example.com",
+                "p11@example.com"
+              ]
+            },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "createJob",
+            "status": 201,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000002b" },
+            "json": { "id": "019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c", "status": "running", "total": 11 }
+          }
+        },
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c" },
+          "response": {
+            "operation": "getJob",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000002c" },
+            "json": {
+              "id": "019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c",
+              "kind": "bulk",
+              "status": "running",
+              "total": 11,
+              "done": 0,
+              "created_at": "2026-11-18T10:00:00.000Z",
+              "finished_at": null,
+              "counts": null,
+              "purged": false,
+              "resolve_job_ids": []
+            }
+          }
+        },
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c" },
+          "response": {
+            "operation": "getJob",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000002d" },
+            "json": {
+              "id": "019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c",
+              "kind": "bulk",
+              "status": "running",
+              "total": 11,
+              "done": 4,
+              "created_at": "2026-11-18T10:00:00.000Z",
+              "finished_at": null,
+              "counts": null,
+              "purged": false,
+              "resolve_job_ids": []
+            }
+          }
+        },
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c" },
+          "response": {
+            "operation": "getJob",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000002e" },
+            "json": {
+              "id": "019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c",
+              "kind": "bulk",
+              "status": "running",
+              "total": 11,
+              "done": 7,
+              "created_at": "2026-11-18T10:00:00.000Z",
+              "finished_at": null,
+              "counts": null,
+              "purged": false,
+              "resolve_job_ids": []
+            }
+          }
+        }
+      ],
+      "sleeps": [2, 1],
+      "outcome": { "raises": { "kind": "wait_timeout", "job_ids": ["019a3b72-4d5e-7f6a-8b7c-8d9e0f1a2b3c"] } }
+    },
+    {
+      "name": "list_create_from_emails",
+      "about": "A list from addresses is one JSON POST with a new key.",
+      "call": { "op": "lists.create", "args": { "emails": ["a@example.com", "b@example.com"] } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/jobs",
+            "json": { "emails": ["a@example.com", "b@example.com"] },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "createJob",
+            "status": 201,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000002f" },
+            "json": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "status": "running", "total": 2 }
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": { "returns": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "status": "running", "total": 2 } }
+    },
+    {
+      "name": "list_create_from_csv",
+      "about": "A list from CSV text is a multipart upload: the email_column field first, then the file part, named and typed text/csv.",
+      "call": {
+        "op": "lists.create",
+        "args": {
+          "csv": "name,work_email\nAnn,ann@example.com\nBob,bob@example.com\n",
+          "email_column": "work_email",
+          "filename": "prospects.csv"
+        }
+      },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/jobs",
+            "multipart": [
+              { "name": "email_column", "value": "work_email" },
+              {
+                "name": "file",
+                "filename": "prospects.csv",
+                "content_type": "text/csv",
+                "value": "name,work_email\nAnn,ann@example.com\nBob,bob@example.com\n"
+              }
+            ],
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "createJob",
+            "status": 201,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000030" },
+            "json": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "status": "running", "total": 2 }
+          }
+        }
+      ],
+      "outcome": { "returns": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "total": 2 } }
+    },
+    {
+      "name": "upload_retried_with_same_key",
+      "about": "An upload whose answer is lost is sent again whole with the same key, and gets the replay: one list, charged once.",
+      "call": { "op": "lists.create", "args": { "csv": "email\nann@example.com\nbob@example.com\n" } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/jobs",
+            "multipart": [
+              { "name": "email_column", "value": "email" },
+              {
+                "name": "file",
+                "filename": "list.csv",
+                "content_type": "text/csv",
+                "value": "email\nann@example.com\nbob@example.com\n"
+              }
+            ],
+            "idempotency_key": "new"
+          },
+          "response": { "operation": "createJob", "drop": true }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/jobs",
+            "multipart": [
+              { "name": "email_column", "value": "email" },
+              {
+                "name": "file",
+                "filename": "list.csv",
+                "content_type": "text/csv",
+                "value": "email\nann@example.com\nbob@example.com\n"
+              }
+            ],
+            "idempotency_key": "same"
+          },
+          "response": {
+            "operation": "createJob",
+            "status": 201,
+            "headers": {
+              "x-request-id": "019a7e00-0000-7000-8000-000000000032",
+              "idempotent-replayed": "true",
+              "original-request": "019a7e00-0000-7000-8000-000000000031"
+            },
+            "json": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "status": "running", "total": 2 }
+          }
+        }
+      ],
+      "sleeps": [{ "min": 0.25, "max": 0.5 }],
+      "outcome": { "returns": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "total": 2 } }
+    },
+    {
+      "name": "retry_after_dropped_answer_same_key",
+      "about": "A check whose answer is lost is sent again with the same key, and gets the replay: one job, charged once.",
+      "call": { "op": "verify", "args": { "email": "ann@example.com" } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "ann@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": { "operation": "verifyEmail", "drop": true }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "ann@example.com" },
+            "idempotency_key": "same"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": {
+              "x-request-id": "019a7e00-0000-7000-8000-000000000034",
+              "idempotent-replayed": "true",
+              "original-request": "019a7e00-0000-7000-8000-000000000033"
+            },
+            "json": {
+              "email": "ann@example.com",
+              "verdict": "valid",
+              "score": null,
+              "safe_to_send": true,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_exists",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77"
+            }
+          }
+        }
+      ],
+      "sleeps": [{ "min": 0.25, "max": 0.5 }],
+      "outcome": { "returns": { "verdict": "valid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" } }
+    },
+    {
+      "name": "retry_after_503_same_key",
+      "about": "A 503 is retried after its Retry-After, with the same key.",
+      "call": { "op": "verify", "args": { "email": "ann@example.com" } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "ann@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 503,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000035", "retry-after": "1" },
+            "json": { "error": { "code": "unavailable", "message": "the service is busy; retry shortly" } }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "ann@example.com" },
+            "idempotency_key": "same"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000036" },
+            "json": {
+              "email": "ann@example.com",
+              "verdict": "valid",
+              "score": null,
+              "safe_to_send": true,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_exists",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77"
+            }
+          }
+        }
+      ],
+      "sleeps": [1],
+      "outcome": { "returns": { "verdict": "valid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" } }
+    },
+    {
+      "name": "in_progress_retried_same_key",
+      "about": "A 409 idempotency_in_progress is retried after its Retry-After, with the same key, and gets the first request's answer.",
+      "call": { "op": "lists.create", "args": { "emails": ["a@example.com", "b@example.com"] } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/jobs",
+            "json": { "emails": ["a@example.com", "b@example.com"] },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "createJob",
+            "status": 409,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000037", "retry-after": "1" },
+            "json": {
+              "error": {
+                "code": "idempotency_in_progress",
+                "message": "a request with this Idempotency-Key is still in progress; retry shortly"
+              }
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/jobs",
+            "json": { "emails": ["a@example.com", "b@example.com"] },
+            "idempotency_key": "same"
+          },
+          "response": {
+            "operation": "createJob",
+            "status": 201,
+            "headers": {
+              "x-request-id": "019a7e00-0000-7000-8000-000000000039",
+              "idempotent-replayed": "true",
+              "original-request": "019a7e00-0000-7000-8000-000000000038"
+            },
+            "json": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "status": "running", "total": 2 }
+          }
+        }
+      ],
+      "sleeps": [1],
+      "outcome": { "returns": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "total": 2 } }
+    },
+    {
+      "name": "idempotency_conflict_not_retried",
+      "about": "A 409 idempotency_conflict is a conflict error at once: never retried.",
+      "call": { "op": "lists.create", "args": { "emails": ["a@example.com", "b@example.com"] } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/jobs",
+            "json": { "emails": ["a@example.com", "b@example.com"] },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "createJob",
+            "status": 409,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000003a" },
+            "json": {
+              "error": {
+                "code": "idempotency_conflict",
+                "message": "this Idempotency-Key was used with another request"
+              }
+            }
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": {
+        "raises": {
+          "kind": "conflict",
+          "status": 409,
+          "code": "idempotency_conflict",
+          "request_id": "019a7e00-0000-7000-8000-00000000003a",
+          "message_has_request_id": true
+        }
+      }
+    },
+    {
+      "name": "own_idempotency_key_sent",
+      "about": "A caller's own Idempotency-Key is sent as given.",
+      "call": { "op": "verify", "args": { "email": "ann@example.com", "idempotency_key": "order-42" } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "ann@example.com" },
+            "idempotency_key": { "equals": "order-42" }
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000003b" },
+            "json": {
+              "email": "ann@example.com",
+              "verdict": "valid",
+              "score": null,
+              "safe_to_send": true,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_exists",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77"
+            }
+          }
+        }
+      ],
+      "outcome": { "returns": { "verdict": "valid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" } }
+    },
+    {
+      "name": "webhook_create_not_resent_after_drop",
+      "about": "A webhook's answer holds its secret, shown once, and the API does not replay it: a POST that may have arrived is not sent again.",
+      "call": { "op": "webhooks.create", "args": { "url": "https://hooks.example.com/verifyinboxes" } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/webhooks",
+            "json": { "url": "https://hooks.example.com/verifyinboxes" },
+            "idempotency_key": "new"
+          },
+          "response": { "operation": "createWebhook", "drop": true }
+        }
+      ],
+      "sleeps": [],
+      "outcome": { "raises": { "kind": "connection" } }
+    },
+    {
+      "name": "delete_retried_404_is_done",
+      "about": "A DELETE whose answer is lost is sent again; a 404 then means the first one did it, so the call succeeds.",
+      "call": { "op": "webhooks.delete", "args": { "id": "019a4f10-2b3c-7d4e-8f5a-6b7c8d9e0f12" } },
+      "exchanges": [
+        {
+          "request": { "method": "DELETE", "path": "/v1/webhooks/019a4f10-2b3c-7d4e-8f5a-6b7c8d9e0f12" },
+          "response": { "operation": "deleteWebhook", "drop": true }
+        },
+        {
+          "request": { "method": "DELETE", "path": "/v1/webhooks/019a4f10-2b3c-7d4e-8f5a-6b7c8d9e0f12" },
+          "response": {
+            "operation": "deleteWebhook",
+            "status": 404,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000003c" },
+            "json": { "error": { "code": "not_found", "message": "webhook not found" } }
+          }
+        }
+      ],
+      "sleeps": [{ "min": 0.25, "max": 0.5 }],
+      "outcome": { "returns": null }
+    },
+    {
+      "name": "rate_limit_honours_retry_after",
+      "about": "A 429 is retried after its Retry-After, with the same key.",
+      "call": { "op": "verify", "args": { "email": "ann@example.com" } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "ann@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 429,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000003d", "retry-after": "2" },
+            "json": { "error": { "code": "rate_limited", "message": "too many requests; the limit is 10 per second" } }
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "ann@example.com" },
+            "idempotency_key": "same"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000003e" },
+            "json": {
+              "email": "ann@example.com",
+              "verdict": "valid",
+              "score": null,
+              "safe_to_send": true,
+              "flags": [],
+              "provider": "google",
+              "catch_all_domain": false,
+              "verified_at": "2026-11-18T09:30:00.123Z",
+              "source": "smtp",
+              "reason": "mailbox_exists",
+              "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77"
+            }
+          }
+        }
+      ],
+      "sleeps": [2],
+      "outcome": { "returns": { "verdict": "valid", "job_id": "019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77" } }
+    },
+    {
+      "name": "retry_after_too_long_raises",
+      "about": "A Retry-After longer than 60 seconds is not waited out: the rate-limit error is raised at once, with retry_after.",
+      "call": { "op": "verify", "args": { "email": "ann@example.com" } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "ann@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 429,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000003f", "retry-after": "120" },
+            "json": { "error": { "code": "rate_limited", "message": "too many requests; the limit is 10 per second" } }
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": {
+        "raises": {
+          "kind": "rate_limit",
+          "status": 429,
+          "code": "rate_limited",
+          "request_id": "019a7e00-0000-7000-8000-00000000003f",
+          "retry_after": 120,
+          "message_has_request_id": true
+        }
+      }
+    },
+    {
+      "name": "retries_exhausted_keep_last_request_id",
+      "about": "After the last retry, the error is the last answer's, with its request id; without Retry-After the waits back off.",
+      "call": { "op": "account.get" },
+      "exchanges": [
+        {
+          "request": { "method": "GET", "path": "/v1/account" },
+          "response": {
+            "operation": "getAccount",
+            "status": 502,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000040" },
+            "json": { "error": { "code": "internal", "message": "internal error" } }
+          }
+        },
+        {
+          "request": { "method": "GET", "path": "/v1/account" },
+          "response": {
+            "operation": "getAccount",
+            "status": 502,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000041" },
+            "json": { "error": { "code": "internal", "message": "internal error" } }
+          }
+        },
+        {
+          "request": { "method": "GET", "path": "/v1/account" },
+          "response": {
+            "operation": "getAccount",
+            "status": 502,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000042" },
+            "json": { "error": { "code": "internal", "message": "internal error" } }
+          }
+        }
+      ],
+      "sleeps": [{ "min": 0.25, "max": 0.5 }, { "min": 0.5, "max": 1 }],
+      "outcome": {
+        "raises": {
+          "kind": "server",
+          "status": 502,
+          "code": "internal",
+          "request_id": "019a7e00-0000-7000-8000-000000000042",
+          "message_has_request_id": true
+        }
+      }
+    },
+    {
+      "name": "non_json_error_is_typed",
+      "about": "An error page that is not JSON (a proxy's) is still a typed error: its status, no code, its request id.",
+      "client": { "max_retries": 0 },
+      "call": { "op": "account.get" },
+      "exchanges": [
+        {
+          "request": { "method": "GET", "path": "/v1/account" },
+          "response": {
+            "operation": null,
+            "status": 502,
+            "headers": {
+              "x-request-id": "019a7e00-0000-7000-8000-000000000043",
+              "content-type": "text/html; charset=utf-8"
+            },
+            "text": "<html><head><title>502 Bad Gateway</title></head><body><h1>502 Bad Gateway</h1></body></html>\n"
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": {
+        "raises": {
+          "kind": "server",
+          "status": 502,
+          "code": null,
+          "request_id": "019a7e00-0000-7000-8000-000000000043",
+          "message_has_request_id": true
+        }
+      }
+    },
+    {
+      "name": "auth_error_not_retried",
+      "about": "A refused key is an authentication error at once, never retried, and its message names the request id.",
+      "client": { "api_key": "bv_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" },
+      "call": { "op": "account.get" },
+      "exchanges": [
+        {
+          "request": { "method": "GET", "path": "/v1/account" },
+          "response": {
+            "operation": "getAccount",
+            "status": 401,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000044" },
+            "json": { "error": { "code": "unauthorized", "message": "missing, malformed or revoked API key" } }
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": {
+        "raises": {
+          "kind": "authentication",
+          "status": 401,
+          "code": "unauthorized",
+          "request_id": "019a7e00-0000-7000-8000-000000000044",
+          "message_has_request_id": true
+        }
+      }
+    },
+    {
+      "name": "insufficient_credits",
+      "about": "A 402 is an insufficient-credits error at once, never retried.",
+      "call": { "op": "verify", "args": { "email": "ann@example.com" } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/verify",
+            "json": { "email": "ann@example.com" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "verifyEmail",
+            "status": 402,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000045" },
+            "json": { "error": { "code": "insufficient_credits", "message": "the account has no credits" } }
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": {
+        "raises": {
+          "kind": "insufficient_credits",
+          "status": 402,
+          "code": "insufficient_credits",
+          "request_id": "019a7e00-0000-7000-8000-000000000045",
+          "message_has_request_id": true
+        }
+      }
+    },
+    {
+      "name": "forbidden",
+      "about": "A 403 (here a member's personal access token on a route only an admin may use) is a permission error.",
+      "client": { "api_key": "vi_at_testtesttesttesttesttesttesttesttesttest" },
+      "call": { "op": "webhooks.list" },
+      "exchanges": [
+        {
+          "request": { "method": "GET", "path": "/v1/webhooks" },
+          "response": {
+            "operation": "listWebhooks",
+            "status": 403,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000046" },
+            "json": { "error": { "code": "forbidden", "message": "only an organisation admin can do this" } }
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": {
+        "raises": {
+          "kind": "permission",
+          "status": 403,
+          "code": "forbidden",
+          "request_id": "019a7e00-0000-7000-8000-000000000046",
+          "message_has_request_id": true
+        }
+      }
+    },
+    {
+      "name": "not_found_escaped_id",
+      "about": "A path segment is percent-escaped (`/` and `?` included), so an id never changes the path; a 404 is a not-found error.",
+      "call": { "op": "lists.get", "args": { "id": "a/b?c" } },
+      "exchanges": [
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/a%2Fb%3Fc" },
+          "response": {
+            "operation": "getJob",
+            "status": 404,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000047" },
+            "json": { "error": { "code": "not_found", "message": "job not found" } }
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": {
+        "raises": {
+          "kind": "not_found",
+          "status": 404,
+          "code": "not_found",
+          "request_id": "019a7e00-0000-7000-8000-000000000047",
+          "message_has_request_id": true
+        }
+      }
+    },
+    {
+      "name": "gone",
+      "about": "A 410 is a not-found error with code gone, and a failed download leaves the file it was to replace as it was.",
+      "call": {
+        "op": "lists.download",
+        "args": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "before": "email,verdict\nann@example.com,valid\n" }
+      },
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/download",
+            "headers": { "accept": "text/csv" }
+          },
+          "response": {
+            "operation": "downloadJob",
+            "status": 410,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000048" },
+            "json": { "error": { "code": "gone", "message": "the upload and results of this job have been deleted" } }
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": {
+        "raises": {
+          "kind": "not_found",
+          "status": 410,
+          "code": "gone",
+          "request_id": "019a7e00-0000-7000-8000-000000000048",
+          "message_has_request_id": true
+        },
+        "file": "unchanged"
+      }
+    },
+    {
+      "name": "consumer_list",
+      "about": "A 422 is an invalid-request error, with the API's code.",
+      "call": { "op": "lists.create", "args": { "emails": ["a@example.com", "b@example.com"] } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/jobs",
+            "json": { "emails": ["a@example.com", "b@example.com"] },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "createJob",
+            "status": 422,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000049" },
+            "json": {
+              "error": {
+                "code": "consumer_list",
+                "message": "more than 40% of the addresses are on consumer email providers"
+              }
+            }
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": {
+        "raises": {
+          "kind": "invalid_request",
+          "status": 422,
+          "code": "consumer_list",
+          "request_id": "019a7e00-0000-7000-8000-000000000049",
+          "message_has_request_id": true
+        }
+      }
+    },
+    {
+      "name": "list_wait_backs_off",
+      "about": "Waiting for a list asks at once, then after 2, 4, 8 and 16 seconds (then every 30), until it is done.",
+      "call": { "op": "lists.wait", "args": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b" } },
+      "exchanges": [
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b" },
+          "response": {
+            "operation": "getJob",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000004a" },
+            "json": {
+              "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b",
+              "kind": "bulk",
+              "status": "running",
+              "total": 2000,
+              "done": 120,
+              "created_at": "2026-11-18T10:00:00.000Z",
+              "finished_at": null,
+              "counts": null,
+              "purged": false,
+              "resolve_job_ids": []
+            }
+          }
+        },
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b" },
+          "response": {
+            "operation": "getJob",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000004b" },
+            "json": {
+              "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b",
+              "kind": "bulk",
+              "status": "running",
+              "total": 2000,
+              "done": 400,
+              "created_at": "2026-11-18T10:00:00.000Z",
+              "finished_at": null,
+              "counts": null,
+              "purged": false,
+              "resolve_job_ids": []
+            }
+          }
+        },
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b" },
+          "response": {
+            "operation": "getJob",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000004c" },
+            "json": {
+              "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b",
+              "kind": "bulk",
+              "status": "running",
+              "total": 2000,
+              "done": 900,
+              "created_at": "2026-11-18T10:00:00.000Z",
+              "finished_at": null,
+              "counts": null,
+              "purged": false,
+              "resolve_job_ids": []
+            }
+          }
+        },
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b" },
+          "response": {
+            "operation": "getJob",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000004d" },
+            "json": {
+              "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b",
+              "kind": "bulk",
+              "status": "running",
+              "total": 2000,
+              "done": 1500,
+              "created_at": "2026-11-18T10:00:00.000Z",
+              "finished_at": null,
+              "counts": null,
+              "purged": false,
+              "resolve_job_ids": []
+            }
+          }
+        },
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b" },
+          "response": {
+            "operation": "getJob",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000004e" },
+            "json": {
+              "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b",
+              "kind": "bulk",
+              "status": "done",
+              "total": 2000,
+              "done": 2000,
+              "created_at": "2026-11-18T10:00:00.000Z",
+              "finished_at": "2026-11-18T10:41:12.551Z",
+              "counts": { "valid": 1410, "invalid": 230, "catch_all": 260, "risky": 40, "unknown": 60 },
+              "purged": false,
+              "resolve_job_ids": [],
+              "download_url": "https://api.verifyinboxes.com/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/download"
+            }
+          }
+        }
+      ],
+      "sleeps": [2, 4, 8, 16],
+      "outcome": {
+        "returns": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "status": "done", "total": 2000, "done": 2000 }
+      }
+    },
+    {
+      "name": "results_follow_cursor_through_empty_pages",
+      "about": "Results follow next_cursor until it is null, through a page with no rows: every row once, in order.",
+      "call": { "op": "lists.results", "args": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "page_size": 2 } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/results",
+            "query": { "limit": "2" }
+          },
+          "response": {
+            "operation": "listJobResults",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000004f" },
+            "json": {
+              "data": [
+                {
+                  "row": 1,
+                  "email": "p1@example.com",
+                  "verdict": "valid",
+                  "score": null,
+                  "safe_to_send": true,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_exists"
+                },
+                {
+                  "row": 2,
+                  "email": "p2@example.com",
+                  "verdict": "invalid",
+                  "score": null,
+                  "safe_to_send": false,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_not_found"
+                }
+              ],
+              "next_cursor": "c1",
+              "complete": true
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/results",
+            "query": { "limit": "2", "cursor": "c1" }
+          },
+          "response": {
+            "operation": "listJobResults",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000050" },
+            "json": { "data": [], "next_cursor": "c2", "complete": true }
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/results",
+            "query": { "limit": "2", "cursor": "c2" }
+          },
+          "response": {
+            "operation": "listJobResults",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000051" },
+            "json": {
+              "data": [
+                {
+                  "row": 3,
+                  "email": "p3@example.com",
+                  "verdict": "valid",
+                  "score": null,
+                  "safe_to_send": true,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_exists"
+                }
+              ],
+              "next_cursor": null,
+              "complete": true
+            }
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": { "returns": { "rows": ["p1@example.com", "p2@example.com", "p3@example.com"] } }
+    },
+    {
+      "name": "results_page_retried_same_cursor",
+      "about": "A page that fails is asked for again with the same cursor: no row skipped, none twice.",
+      "call": { "op": "lists.results", "args": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "page_size": 2 } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/results",
+            "query": { "limit": "2" }
+          },
+          "response": {
+            "operation": "listJobResults",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000052" },
+            "json": {
+              "data": [
+                {
+                  "row": 1,
+                  "email": "p1@example.com",
+                  "verdict": "valid",
+                  "score": null,
+                  "safe_to_send": true,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_exists"
+                },
+                {
+                  "row": 2,
+                  "email": "p2@example.com",
+                  "verdict": "invalid",
+                  "score": null,
+                  "safe_to_send": false,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_not_found"
+                }
+              ],
+              "next_cursor": "c1",
+              "complete": true
+            }
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/results",
+            "query": { "limit": "2", "cursor": "c1" }
+          },
+          "response": {
+            "operation": "listJobResults",
+            "status": 503,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000053", "retry-after": "1" },
+            "json": { "error": { "code": "unavailable", "message": "the service is busy; retry shortly" } }
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/results",
+            "query": { "limit": "2", "cursor": "c1" }
+          },
+          "response": {
+            "operation": "listJobResults",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000054" },
+            "json": {
+              "data": [
+                {
+                  "row": 3,
+                  "email": "p3@example.com",
+                  "verdict": "valid",
+                  "score": null,
+                  "safe_to_send": true,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_exists"
+                },
+                {
+                  "row": 4,
+                  "email": "p4@example.com",
+                  "verdict": "invalid",
+                  "score": null,
+                  "safe_to_send": false,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_not_found"
+                }
+              ],
+              "next_cursor": null,
+              "complete": true
+            }
+          }
+        }
+      ],
+      "sleeps": [1],
+      "outcome": { "returns": { "rows": ["p1@example.com", "p2@example.com", "p3@example.com", "p4@example.com"] } }
+    },
+    {
+      "name": "results_same_cursor_twice_stops",
+      "about": "A page with no rows whose next_cursor is the cursor just sent would loop for ever: it is an error instead.",
+      "call": { "op": "lists.results", "args": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b" } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/results",
+            "query": { "limit": "500" }
+          },
+          "response": {
+            "operation": "listJobResults",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000055" },
+            "json": { "data": [], "next_cursor": "c1", "complete": true }
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/results",
+            "query": { "limit": "500", "cursor": "c1" }
+          },
+          "response": {
+            "operation": "listJobResults",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000056" },
+            "json": { "data": [], "next_cursor": "c1", "complete": true }
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": { "raises": { "kind": "sdk" } }
+    },
+    {
+      "name": "results_not_ready_not_retried",
+      "about": "A 409 not_ready is a conflict error at once, never retried.",
+      "call": { "op": "lists.results", "args": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b" } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/results",
+            "query": { "limit": "500" }
+          },
+          "response": {
+            "operation": "listJobResults",
+            "status": 409,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000057" },
+            "json": { "error": { "code": "not_ready", "message": "the job has not finished" } }
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": {
+        "raises": {
+          "kind": "conflict",
+          "status": 409,
+          "code": "not_ready",
+          "request_id": "019a7e00-0000-7000-8000-000000000057",
+          "message_has_request_id": true
+        }
+      }
+    },
+    {
+      "name": "results_filters",
+      "about": "verdicts are sent comma-separated and partial as 1, beside the page size.",
+      "call": {
+        "op": "lists.results",
+        "args": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "verdicts": ["valid", "catch_all"], "partial": true }
+      },
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/results",
+            "query": { "limit": "500", "verdicts": "valid,catch_all", "partial": "1" }
+          },
+          "response": {
+            "operation": "listJobResults",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000058" },
+            "json": {
+              "data": [
+                {
+                  "row": 1,
+                  "email": "ann@example.com",
+                  "verdict": "valid",
+                  "score": null,
+                  "safe_to_send": true,
+                  "flags": [],
+                  "provider": "google",
+                  "catch_all_domain": false,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "mailbox_exists"
+                },
+                {
+                  "row": 2,
+                  "email": "bob@example.com",
+                  "verdict": "catch_all",
+                  "score": 0.873,
+                  "safe_to_send": true,
+                  "flags": ["gateway"],
+                  "provider": "proofpoint",
+                  "catch_all_domain": true,
+                  "verified_at": "2026-11-18T09:30:00.123Z",
+                  "source": "smtp",
+                  "reason": "accept_all"
+                }
+              ],
+              "next_cursor": null,
+              "complete": false
+            }
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": { "returns": { "rows": ["ann@example.com", "bob@example.com"] } }
+    },
+    {
+      "name": "download_writes_file",
+      "about": "A download asks for text/csv with its filter, and replaces the file with the whole CSV.",
+      "call": {
+        "op": "lists.download",
+        "args": {
+          "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b",
+          "before": "email,verdict\nann@example.com,valid\n",
+          "only_safe_to_send": true
+        }
+      },
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/download",
+            "query": { "only": "safe_to_send" },
+            "headers": { "accept": "text/csv" }
+          },
+          "response": {
+            "operation": "downloadJob",
+            "status": 200,
+            "headers": {
+              "x-request-id": "019a7e00-0000-7000-8000-000000000059",
+              "content-type": "text/csv; charset=utf-8",
+              "content-disposition": "attachment; filename=\"019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b-safe-to-send.csv\""
+            },
+            "text": "Name,Email,verdict,score,safe_to_send,flags,provider,catch_all_domain,verified_at,source,reason,did_you_mean\nAnn,ann@example.com,valid,,true,,google,false,2026-11-18T10:12:00.123Z,smtp,mailbox_exists,\nBob,bob@example.com,catch_all,0.873,true,gateway,proofpoint,true,2026-11-18T10:12:02.004Z,smtp,accept_all,\n"
+          }
+        }
+      ],
+      "sleeps": [],
+      "outcome": {
+        "returns": {
+          "file": "Name,Email,verdict,score,safe_to_send,flags,provider,catch_all_domain,verified_at,source,reason,did_you_mean\nAnn,ann@example.com,valid,,true,,google,false,2026-11-18T10:12:00.123Z,smtp,mailbox_exists,\nBob,bob@example.com,catch_all,0.873,true,gateway,proofpoint,true,2026-11-18T10:12:02.004Z,smtp,accept_all,\n"
+        }
+      }
+    },
+    {
+      "name": "download_cut_keeps_old_file",
+      "about": "A download cut short is retried from the start; when every try is cut, the error is a connection error and the old file is left as it was.",
+      "call": {
+        "op": "lists.download",
+        "args": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "before": "email,verdict\nann@example.com,valid\n" }
+      },
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/download",
+            "headers": { "accept": "text/csv" }
+          },
+          "response": {
+            "operation": "downloadJob",
+            "status": 200,
+            "headers": {
+              "x-request-id": "019a7e00-0000-7000-8000-00000000005a",
+              "content-type": "text/csv; charset=utf-8",
+              "content-disposition": "attachment; filename=\"019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b.csv\""
+            },
+            "text": "Name,Email,verdict,score,safe_to_send,flags,provider,catch_all_domain,verified_at,source,reason,did_you_mean\nAnn,ann@example.com,valid,,true,,google,false,2026-11-18T10:12:00.123Z,smtp,mailbox_exists,\nBob,bob@example.com,catch_all,0.873,true,gateway,proofpoint,true,2026-11-18T10:12:02.004Z,smtp,accept_all,\n",
+            "cut_after": 50
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/download",
+            "headers": { "accept": "text/csv" }
+          },
+          "response": {
+            "operation": "downloadJob",
+            "status": 200,
+            "headers": {
+              "x-request-id": "019a7e00-0000-7000-8000-00000000005b",
+              "content-type": "text/csv; charset=utf-8",
+              "content-disposition": "attachment; filename=\"019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b.csv\""
+            },
+            "text": "Name,Email,verdict,score,safe_to_send,flags,provider,catch_all_domain,verified_at,source,reason,did_you_mean\nAnn,ann@example.com,valid,,true,,google,false,2026-11-18T10:12:00.123Z,smtp,mailbox_exists,\nBob,bob@example.com,catch_all,0.873,true,gateway,proofpoint,true,2026-11-18T10:12:02.004Z,smtp,accept_all,\n",
+            "cut_after": 50
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/download",
+            "headers": { "accept": "text/csv" }
+          },
+          "response": {
+            "operation": "downloadJob",
+            "status": 200,
+            "headers": {
+              "x-request-id": "019a7e00-0000-7000-8000-00000000005c",
+              "content-type": "text/csv; charset=utf-8",
+              "content-disposition": "attachment; filename=\"019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b.csv\""
+            },
+            "text": "Name,Email,verdict,score,safe_to_send,flags,provider,catch_all_domain,verified_at,source,reason,did_you_mean\nAnn,ann@example.com,valid,,true,,google,false,2026-11-18T10:12:00.123Z,smtp,mailbox_exists,\nBob,bob@example.com,catch_all,0.873,true,gateway,proofpoint,true,2026-11-18T10:12:02.004Z,smtp,accept_all,\n",
+            "cut_after": 50
+          }
+        }
+      ],
+      "sleeps": [{ "min": 0.25, "max": 0.5 }, { "min": 0.5, "max": 1 }],
+      "outcome": { "raises": { "kind": "connection" }, "file": "unchanged" }
+    },
+    {
+      "name": "lists_get",
+      "about": "A list's status and counts.",
+      "call": { "op": "lists.get", "args": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b" } },
+      "exchanges": [
+        {
+          "request": { "method": "GET", "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b" },
+          "response": {
+            "operation": "getJob",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000005d" },
+            "json": {
+              "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b",
+              "kind": "bulk",
+              "status": "done",
+              "total": 2000,
+              "done": 2000,
+              "created_at": "2026-11-18T10:00:00.000Z",
+              "finished_at": "2026-11-18T10:41:12.551Z",
+              "counts": { "valid": 1410, "invalid": 230, "catch_all": 260, "risky": 40, "unknown": 60 },
+              "purged": false,
+              "resolve_job_ids": ["019a3c01-5d2e-7f3a-8b4c-9d0e1f2a3b4c"],
+              "download_url": "https://api.verifyinboxes.com/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/download"
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "returns": {
+          "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b",
+          "kind": "bulk",
+          "status": "done",
+          "total": 2000,
+          "counts": { "valid": 1410, "invalid": 230, "catch_all": 260, "risky": 40, "unknown": 60 },
+          "resolve_job_ids": ["019a3c01-5d2e-7f3a-8b4c-9d0e1f2a3b4c"]
+        }
+      }
+    },
+    {
+      "name": "lists_resolve",
+      "about": "Resolving every eligible row of a list sends no body, with a new key.",
+      "call": { "op": "lists.resolve", "args": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b" } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/resolve",
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "resolveJob",
+            "status": 202,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000005e" },
+            "json": {
+              "id": "019a3c01-5d2e-7f3a-8b4c-9d0e1f2a3b4c",
+              "status": "running",
+              "total": 300,
+              "skipped": { "ineligible": 1640, "excluded": 12, "already_requested": 0, "duplicate": 3 }
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "returns": {
+          "id": "019a3c01-5d2e-7f3a-8b4c-9d0e1f2a3b4c",
+          "status": "running",
+          "total": 300,
+          "skipped": { "ineligible": 1640, "excluded": 12, "already_requested": 0, "duplicate": 3 }
+        }
+      }
+    },
+    {
+      "name": "lists_resolve_some",
+      "about": "Resolving some rows sends their addresses, with a new key.",
+      "call": {
+        "op": "lists.resolve",
+        "args": { "id": "019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "emails": ["bob@example.com"] }
+      },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/jobs/019a3b71-3c4d-7e5f-8a6b-7c8d9e0f1a2b/resolve",
+            "json": { "emails": ["bob@example.com"] },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "resolveJob",
+            "status": 202,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000005f" },
+            "json": {
+              "id": "019a3c02-6e3f-7a4b-8c5d-0e1f2a3b4c5d",
+              "status": "running",
+              "total": 1,
+              "skipped": { "ineligible": 0, "excluded": 0, "already_requested": 0, "duplicate": 0 }
+            }
+          }
+        }
+      ],
+      "outcome": { "returns": { "id": "019a3c02-6e3f-7a4b-8c5d-0e1f2a3b4c5d", "total": 1 } }
+    },
+    {
+      "name": "domains_get",
+      "about": "What is known about a domain.",
+      "call": { "op": "domains.get", "args": { "domain": "example.com" } },
+      "exchanges": [
+        {
+          "request": { "method": "GET", "path": "/v1/domains/example.com" },
+          "response": {
+            "operation": "getDomain",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000060" },
+            "json": {
+              "domain": "example.com",
+              "provider": "google",
+              "gateway": false,
+              "accepts_mail": true,
+              "mx_hosts": [
+                { "host": "aspmx.l.google.com", "preference": 1 },
+                { "host": "alt1.aspmx.l.google.com", "preference": 5 }
+              ],
+              "catch_all": false,
+              "catch_all_checked_at": "2026-11-15T08:12:40.000Z",
+              "email_pattern": "first.last",
+              "pattern_confidence": 0.92,
+              "registered_at": "1995-08-14T04:00:00.000Z"
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "returns": {
+          "domain": "example.com",
+          "provider": "google",
+          "accepts_mail": true,
+          "mx_hosts": [
+            { "host": "aspmx.l.google.com", "preference": 1 },
+            { "host": "alt1.aspmx.l.google.com", "preference": 5 }
+          ],
+          "catch_all": false
+        }
+      }
+    },
+    {
+      "name": "suppressions_list",
+      "about": "The suppression list: its domains and how many addresses.",
+      "call": { "op": "suppressions.list" },
+      "exchanges": [
+        {
+          "request": { "method": "GET", "path": "/v1/suppressions" },
+          "response": {
+            "operation": "listSuppressions",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000061" },
+            "json": { "domains": ["competitor.example"], "address_count": 1 }
+          }
+        }
+      ],
+      "outcome": { "returns": { "domains": ["competitor.example"], "address_count": 1 } }
+    },
+    {
+      "name": "suppressions_add",
+      "about": "Adding to the suppression list sends addresses and domains, with a new key; the call returns how many were added.",
+      "call": { "op": "suppressions.add", "args": { "emails": ["ann@example.com"], "domains": ["competitor.example"] } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/suppressions",
+            "json": { "emails": ["ann@example.com"], "domains": ["competitor.example"] },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "addSuppressions",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000062" },
+            "json": { "added": 2 }
+          }
+        }
+      ],
+      "outcome": { "returns": 2 }
+    },
+    {
+      "name": "suppressions_remove",
+      "about": "Removing from the suppression list sends only what was given (no empty domains), and returns how many were removed.",
+      "call": { "op": "suppressions.remove", "args": { "emails": ["ann@example.com"] } },
+      "exchanges": [
+        {
+          "request": { "method": "DELETE", "path": "/v1/suppressions", "json": { "emails": ["ann@example.com"] } },
+          "response": {
+            "operation": "removeSuppressions",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000063" },
+            "json": { "removed": 1 }
+          }
+        }
+      ],
+      "outcome": { "returns": 1 }
+    },
+    {
+      "name": "webhooks_create",
+      "about": "Registering a webhook returns it with its signing secret, shown only this once.",
+      "call": {
+        "op": "webhooks.create",
+        "args": { "url": "https://hooks.example.com/verifyinboxes", "events": ["job.completed"] }
+      },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/webhooks",
+            "json": { "url": "https://hooks.example.com/verifyinboxes", "events": ["job.completed"] },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "createWebhook",
+            "status": 201,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000064" },
+            "json": {
+              "id": "019a4f10-2b3c-7d4e-8f5a-6b7c8d9e0f12",
+              "url": "https://hooks.example.com/verifyinboxes",
+              "events": ["job.completed"],
+              "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+              "created_at": "2026-11-18T12:00:00.000Z"
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "returns": {
+          "id": "019a4f10-2b3c-7d4e-8f5a-6b7c8d9e0f12",
+          "url": "https://hooks.example.com/verifyinboxes",
+          "events": ["job.completed"],
+          "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e"
+        }
+      }
+    },
+    {
+      "name": "webhooks_list",
+      "about": "The webhooks, oldest first, never their secrets.",
+      "call": { "op": "webhooks.list" },
+      "exchanges": [
+        {
+          "request": { "method": "GET", "path": "/v1/webhooks" },
+          "response": {
+            "operation": "listWebhooks",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000065" },
+            "json": [
+              {
+                "id": "019a4f10-2b3c-7d4e-8f5a-6b7c8d9e0f12",
+                "url": "https://hooks.example.com/verifyinboxes",
+                "events": ["job.completed"],
+                "created_at": "2026-11-18T12:00:00.000Z"
+              }
+            ]
+          }
+        }
+      ],
+      "outcome": {
+        "returns": [
+          {
+            "id": "019a4f10-2b3c-7d4e-8f5a-6b7c8d9e0f12",
+            "url": "https://hooks.example.com/verifyinboxes",
+            "events": ["job.completed"]
+          }
+        ]
+      }
+    },
+    {
+      "name": "notices_list",
+      "about": "A page of contradiction notices after a position, with a limit; next_after is the next call's after.",
+      "call": { "op": "notices.list", "args": { "after": "019a5c2e-41d7-7b3a-8e10-2c9d4f6a1b04", "limit": 50 } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "path": "/v1/notices",
+            "query": { "after": "019a5c2e-41d7-7b3a-8e10-2c9d4f6a1b04", "limit": "50" }
+          },
+          "response": {
+            "operation": "listNotices",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000066" },
+            "json": {
+              "notices": [
+                {
+                  "notice_id": "019a5c2e-41d7-7b3a-8e10-2c9d4f6a1b05",
+                  "email": "ann@example.com",
+                  "job_ids": ["019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77"],
+                  "previous": {
+                    "verdict": "valid",
+                    "reason": "mailbox_exists",
+                    "score": null,
+                    "safe_to_send": true,
+                    "verified_at": "2026-10-01T09:30:00.000Z"
+                  },
+                  "current": {
+                    "verdict": "invalid",
+                    "reason": "known_outcome",
+                    "verified_at": "2026-11-04T08:00:05.104Z"
+                  },
+                  "evidence": {
+                    "kind": "hard_bounce",
+                    "dsn_code": "5.1.1",
+                    "observed_at": "2026-11-03",
+                    "reported_by_you": false
+                  },
+                  "message": "We reported ann@example.com as valid (safe to send) on 2026-10-01. A hard bounce on 2026-11-03 contradicts that, and re-verification now gives invalid. Remove it from your sends.",
+                  "created_at": "2026-11-04T08:00:05.123456Z"
+                }
+              ],
+              "next_after": "019a5c2e-41d7-7b3a-8e10-2c9d4f6a1b05"
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "returns": {
+          "notices": [
+            {
+              "notice_id": "019a5c2e-41d7-7b3a-8e10-2c9d4f6a1b05",
+              "email": "ann@example.com",
+              "current": { "verdict": "invalid" }
+            }
+          ],
+          "next_after": "019a5c2e-41d7-7b3a-8e10-2c9d4f6a1b05"
+        }
+      }
+    },
+    {
+      "name": "feedback_report",
+      "about": "Reporting outcomes sends the events as given, with a new key.",
+      "call": {
+        "op": "feedback.report",
+        "args": {
+          "events": [
+            {
+              "email": "ann@example.com",
+              "type": "hard_bounce",
+              "observed_at": "2026-11-04T10:00:00Z",
+              "dsn_code": "5.1.1",
+              "event_id": "b-1"
+            }
+          ]
+        }
+      },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/feedback",
+            "json": {
+              "events": [
+                {
+                  "email": "ann@example.com",
+                  "type": "hard_bounce",
+                  "observed_at": "2026-11-04T10:00:00Z",
+                  "dsn_code": "5.1.1",
+                  "event_id": "b-1"
+                }
+              ]
+            },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "sendFeedback",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000067" },
+            "json": { "accepted": 1, "duplicates": 0, "ignored": 0, "rejected": [] }
+          }
+        }
+      ],
+      "outcome": { "returns": { "accepted": 1, "duplicates": 0, "ignored": 0, "rejected": [] } }
+    },
+    {
+      "name": "integrations_create",
+      "about": "Making an integration returns its webhook URL, shown only this once.",
+      "call": { "op": "integrations.create", "args": { "provider": "instantly", "label": "main workspace" } },
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/v1/integrations",
+            "json": { "provider": "instantly", "label": "main workspace" },
+            "idempotency_key": "new"
+          },
+          "response": {
+            "operation": "createIntegration",
+            "status": 201,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000068" },
+            "json": {
+              "id": "019a4f22-7c1d-7e2f-9a3b-4c5d6e7f8a90",
+              "provider": "instantly",
+              "label": "main workspace",
+              "url": "https://api.verifyinboxes.com/hooks/instantly/whk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "created_at": "2026-11-18T12:05:00.000Z"
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "returns": {
+          "id": "019a4f22-7c1d-7e2f-9a3b-4c5d6e7f8a90",
+          "provider": "instantly",
+          "label": "main workspace",
+          "url": "https://api.verifyinboxes.com/hooks/instantly/whk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        }
+      }
+    },
+    {
+      "name": "integrations_list",
+      "about": "The integrations, oldest first, never their URLs.",
+      "call": { "op": "integrations.list" },
+      "exchanges": [
+        {
+          "request": { "method": "GET", "path": "/v1/integrations" },
+          "response": {
+            "operation": "listIntegrations",
+            "status": 200,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-000000000069" },
+            "json": [
+              {
+                "id": "019a4f22-7c1d-7e2f-9a3b-4c5d6e7f8a90",
+                "provider": "instantly",
+                "label": "main workspace",
+                "token_prefix": "whk_xxxxxxxx",
+                "created_at": "2026-11-18T12:05:00.000Z",
+                "last_event_at": "2026-11-18T14:21:09.310Z",
+                "last_bounce_at": "2026-11-18T13:02:44.101Z",
+                "last_error": null,
+                "last_error_at": null,
+                "signed": false
+              }
+            ]
+          }
+        }
+      ],
+      "outcome": {
+        "returns": [
+          {
+            "id": "019a4f22-7c1d-7e2f-9a3b-4c5d6e7f8a90",
+            "provider": "instantly",
+            "token_prefix": "whk_xxxxxxxx",
+            "last_error": null,
+            "signed": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "integrations_delete",
+      "about": "Deleting an integration: a 204 with no body.",
+      "call": { "op": "integrations.delete", "args": { "id": "019a4f22-7c1d-7e2f-9a3b-4c5d6e7f8a90" } },
+      "exchanges": [
+        {
+          "request": { "method": "DELETE", "path": "/v1/integrations/019a4f22-7c1d-7e2f-9a3b-4c5d6e7f8a90" },
+          "response": {
+            "operation": "deleteIntegration",
+            "status": 204,
+            "headers": { "x-request-id": "019a7e00-0000-7000-8000-00000000006a" }
+          }
+        }
+      ],
+      "outcome": { "returns": null }
+    }
+  ],
+  "signatures": [
+    {
+      "name": "valid",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\": \"job.completed\", \"job_id\": \"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\", \"kind\": \"bulk\", \"status\": \"done\", \"total\": 2, \"counts\": {\"valid\": 1, \"invalid\": 1}, \"finished_at\": \"2026-10-31T11:00:00.123456+00:00\", \"download_url\": \"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "t=1762858800,v1=b10b95be47b898cc89c3d20033c9b43376187d64f091ef22f9714ade07fc317f",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": true
+    },
+    {
+      "name": "valid_spaces_after_comma",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\": \"job.completed\", \"job_id\": \"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\", \"kind\": \"bulk\", \"status\": \"done\", \"total\": 2, \"counts\": {\"valid\": 1, \"invalid\": 1}, \"finished_at\": \"2026-10-31T11:00:00.123456+00:00\", \"download_url\": \"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "t=1762858800, v1=b10b95be47b898cc89c3d20033c9b43376187d64f091ef22f9714ade07fc317f",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": true
+    },
+    {
+      "name": "valid_second_v1_matches",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\": \"job.completed\", \"job_id\": \"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\", \"kind\": \"bulk\", \"status\": \"done\", \"total\": 2, \"counts\": {\"valid\": 1, \"invalid\": 1}, \"finished_at\": \"2026-10-31T11:00:00.123456+00:00\", \"download_url\": \"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "t=1762858800,v1=9dc6a6d37b919ad050937b23898fcf99c0fed67e4749cabc244583a92164418a,v1=b10b95be47b898cc89c3d20033c9b43376187d64f091ef22f9714ade07fc317f,v1=146098499db1f01aa7b99c069739be122c6c70388b0078da83c1ea3328ce6997",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": true
+    },
+    {
+      "name": "valid_at_exactly_300s",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\": \"job.completed\", \"job_id\": \"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\", \"kind\": \"bulk\", \"status\": \"done\", \"total\": 2, \"counts\": {\"valid\": 1, \"invalid\": 1}, \"finished_at\": \"2026-10-31T11:00:00.123456+00:00\", \"download_url\": \"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "t=1762858500,v1=ad81829d0e4293199a282ddc8f2ef8a9b14d1501de221d5012fcdcf817625bae",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": true
+    },
+    {
+      "name": "valid_utf8_body",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\": \"address.contradicted\", \"notice_id\": \"019a5c2e-41d7-7b3a-8e10-2c9d4f6a1b05\", \"email\": \"zoe@example.com\", \"message\": \"Zoë's address bounced.\"}",
+      "header": "t=1762858800,v1=e9d8971224be939888473ebbf80b11a176cc339ba244e1e40df84d2139bf1f22",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": true
+    },
+    {
+      "name": "body_changed_one_byte",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\": \"job.completed\", \"job_id\": \"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\", \"kind\": \"bulk\", \"status\": \"done\", \"total\": 3, \"counts\": {\"valid\": 1, \"invalid\": 1}, \"finished_at\": \"2026-10-31T11:00:00.123456+00:00\", \"download_url\": \"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "t=1762858800,v1=b10b95be47b898cc89c3d20033c9b43376187d64f091ef22f9714ade07fc317f",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": false
+    },
+    {
+      "name": "body_reserialised",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\":\"job.completed\",\"job_id\":\"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\",\"kind\":\"bulk\",\"status\":\"done\",\"total\":2,\"counts\":{\"valid\":1,\"invalid\":1},\"finished_at\":\"2026-10-31T11:00:00.123456+00:00\",\"download_url\":\"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "t=1762858800,v1=b10b95be47b898cc89c3d20033c9b43376187d64f091ef22f9714ade07fc317f",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": false
+    },
+    {
+      "name": "wrong_secret",
+      "secret": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "body": "{\"event\": \"job.completed\", \"job_id\": \"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\", \"kind\": \"bulk\", \"status\": \"done\", \"total\": 2, \"counts\": {\"valid\": 1, \"invalid\": 1}, \"finished_at\": \"2026-10-31T11:00:00.123456+00:00\", \"download_url\": \"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "t=1762858800,v1=b10b95be47b898cc89c3d20033c9b43376187d64f091ef22f9714ade07fc317f",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": false
+    },
+    {
+      "name": "secret_hex_decoded",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\": \"job.completed\", \"job_id\": \"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\", \"kind\": \"bulk\", \"status\": \"done\", \"total\": 2, \"counts\": {\"valid\": 1, \"invalid\": 1}, \"finished_at\": \"2026-10-31T11:00:00.123456+00:00\", \"download_url\": \"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "t=1762858800,v1=1ca43de6172ee130897fd2c02e95ca6be0efc488490a245e57aaa22d66d25d9b",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": false
+    },
+    {
+      "name": "stale_301s",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\": \"job.completed\", \"job_id\": \"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\", \"kind\": \"bulk\", \"status\": \"done\", \"total\": 2, \"counts\": {\"valid\": 1, \"invalid\": 1}, \"finished_at\": \"2026-10-31T11:00:00.123456+00:00\", \"download_url\": \"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "t=1762858499,v1=30f811e429b0fca6accd04a79a70c069089e3e6ddaf3e8b4233cc0700a9c3b83",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": false
+    },
+    {
+      "name": "future_301s",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\": \"job.completed\", \"job_id\": \"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\", \"kind\": \"bulk\", \"status\": \"done\", \"total\": 2, \"counts\": {\"valid\": 1, \"invalid\": 1}, \"finished_at\": \"2026-10-31T11:00:00.123456+00:00\", \"download_url\": \"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "t=1762859101,v1=4b68895b8588630b8794169293dd7f9bb26d285059becaa75ba982384e258e80",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": false
+    },
+    {
+      "name": "no_t",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\": \"job.completed\", \"job_id\": \"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\", \"kind\": \"bulk\", \"status\": \"done\", \"total\": 2, \"counts\": {\"valid\": 1, \"invalid\": 1}, \"finished_at\": \"2026-10-31T11:00:00.123456+00:00\", \"download_url\": \"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "v1=b10b95be47b898cc89c3d20033c9b43376187d64f091ef22f9714ade07fc317f",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": false
+    },
+    {
+      "name": "two_t",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\": \"job.completed\", \"job_id\": \"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\", \"kind\": \"bulk\", \"status\": \"done\", \"total\": 2, \"counts\": {\"valid\": 1, \"invalid\": 1}, \"finished_at\": \"2026-10-31T11:00:00.123456+00:00\", \"download_url\": \"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "t=1762858800,t=1762858800,v1=b10b95be47b898cc89c3d20033c9b43376187d64f091ef22f9714ade07fc317f",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": false
+    },
+    {
+      "name": "no_v1",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\": \"job.completed\", \"job_id\": \"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\", \"kind\": \"bulk\", \"status\": \"done\", \"total\": 2, \"counts\": {\"valid\": 1, \"invalid\": 1}, \"finished_at\": \"2026-10-31T11:00:00.123456+00:00\", \"download_url\": \"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "t=1762858800",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": false
+    },
+    {
+      "name": "v1_63_chars",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\": \"job.completed\", \"job_id\": \"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\", \"kind\": \"bulk\", \"status\": \"done\", \"total\": 2, \"counts\": {\"valid\": 1, \"invalid\": 1}, \"finished_at\": \"2026-10-31T11:00:00.123456+00:00\", \"download_url\": \"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "t=1762858800,v1=b10b95be47b898cc89c3d20033c9b43376187d64f091ef22f9714ade07fc317",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": false
+    },
+    {
+      "name": "v1_not_hex",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\": \"job.completed\", \"job_id\": \"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\", \"kind\": \"bulk\", \"status\": \"done\", \"total\": 2, \"counts\": {\"valid\": 1, \"invalid\": 1}, \"finished_at\": \"2026-10-31T11:00:00.123456+00:00\", \"download_url\": \"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "t=1762858800,v1=g10b95be47b898cc89c3d20033c9b43376187d64f091ef22f9714ade07fc317f",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": false
+    },
+    {
+      "name": "v1_non_ascii",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\": \"job.completed\", \"job_id\": \"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\", \"kind\": \"bulk\", \"status\": \"done\", \"total\": 2, \"counts\": {\"valid\": 1, \"invalid\": 1}, \"finished_at\": \"2026-10-31T11:00:00.123456+00:00\", \"download_url\": \"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "t=1762858800,v1=éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": false
+    },
+    {
+      "name": "t_non_ascii_digits",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\": \"job.completed\", \"job_id\": \"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\", \"kind\": \"bulk\", \"status\": \"done\", \"total\": 2, \"counts\": {\"valid\": 1, \"invalid\": 1}, \"finished_at\": \"2026-10-31T11:00:00.123456+00:00\", \"download_url\": \"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "t=١٧٦٢٨٥٨٨٠٠,v1=ccb213baeeab3e07e27b86ef037515937d14ab3a37ec3dcfcba076819c5f734d,v1=b10b95be47b898cc89c3d20033c9b43376187d64f091ef22f9714ade07fc317f",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": false
+    },
+    {
+      "name": "empty_header",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\": \"job.completed\", \"job_id\": \"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\", \"kind\": \"bulk\", \"status\": \"done\", \"total\": 2, \"counts\": {\"valid\": 1, \"invalid\": 1}, \"finished_at\": \"2026-10-31T11:00:00.123456+00:00\", \"download_url\": \"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": false
+    },
+    {
+      "name": "junk",
+      "secret": "6f1d0c9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e",
+      "body": "{\"event\": \"job.completed\", \"job_id\": \"019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77\", \"kind\": \"bulk\", \"status\": \"done\", \"total\": 2, \"counts\": {\"valid\": 1, \"invalid\": 1}, \"finished_at\": \"2026-10-31T11:00:00.123456+00:00\", \"download_url\": \"https://api.verifyinboxes.com/v1/jobs/019a3b6e-8f0c-7d2e-9a41-5c3e2f1b0a77/download\"}",
+      "header": "x,=,==,t,v1",
+      "now": 1762858800,
+      "tolerance": 300,
+      "valid": false
+    }
+  ]
+}
