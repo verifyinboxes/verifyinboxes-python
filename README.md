@@ -14,14 +14,6 @@ can receive mail, one at a time or as lists of any size, and read the results.
 
 ## Install
 
-Not published yet: until the first release is on PyPI, install it from this repository:
-
-```bash
-pip install git+https://github.com/verifyinboxes/verifyinboxes-python
-```
-
-Once released:
-
 ```bash
 pip install verifyinboxes
 ```
